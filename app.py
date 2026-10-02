@@ -1,5 +1,8 @@
+import os
+
 import pandas as pd
 import streamlit as st
+from explain import explain
 from rules import recommend_rebalance, LOOKAHEAD_HOURS, SAFETY_MARGIN
 
 st.set_page_config(page_title="Agent Liquidity Copilot", page_icon="💸", layout="wide")
@@ -45,6 +48,7 @@ with tab1:
         "Agent's current cash (BDT)", min_value=0, value=default_cash, step=5000,
         help="Defaults to 6x this agent's average hourly demand.",
     )
+    lang = "bn" if st.radio("Language", ["English", "বাংলা"], horizontal=True) == "বাংলা" else "en"
 
     # Chart: actual vs forecasts for the day
     st.subheader("Hourly cash-out demand")
@@ -56,6 +60,7 @@ with tab1:
     i = day.index[day["hour"] == hour][0]
     forecast_next = day["model_pred"].iloc[i : i + LOOKAHEAD_HOURS].tolist()
     rec = recommend_rebalance(cash, forecast_next)
+    text, source = explain(rec, cash, forecast_next, hour, lang, use_llm=bool(os.environ.get("LLM_API_KEY")))
 
     st.subheader(f"Recommendation at {hour}:00")
     m1, m2, m3 = st.columns(3)
@@ -69,7 +74,9 @@ with tab1:
         st.warning(f"🟠 WARNING: add {rec['amount']:,.0f} BDT soon")
     else:
         st.success("🟢 OK: no action needed")
-    st.write(rec["reason"])
+    st.write(text)
+    if source == "llm":
+        st.caption("Reworded by an LLM. Numbers checked against the forecast.")
 
     if rec["amount"] > 0:
         b1, b2, _ = st.columns([1, 1, 4])
