@@ -1,0 +1,4 @@
+strategy,stockout_hours,stockout_pct,unmet_bdt,service_level_pct,cash_moved_bdt,rebalances
+No rebalancing,3456,47.5,70291929,47.5,0,0
+Rules + baseline forecast,193,2.7,1206296,99.1,81460000,3483
+Rules + LightGBM forecast,18,0.2,118238,99.9,79340000,3567
